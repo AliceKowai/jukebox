@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JukeBox Mobile</title>
+    <style>
+        /* Design Clean e Rosa */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #fce4ec; padding: 20px; text-align: center; color: #333; }
+        
+        h1 { color: #ff007f; margin-bottom: 5px; }
+        p.subtitle { color: #888; font-size: 14px; margin-bottom: 25px; }
+
+        /* Área de Login (Mesa + Senha) */
+        .login-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border: 1px solid #ffcce0;
+        }
+
+        .input-group { display: flex; gap: 10px; justify-content: center; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 5px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            box-sizing: border-box; /* Garante que padding não estoure a largura */
+        }
+        
+        input:focus { outline: none; border-color: #ff007f; }
+
+        /* Botões */
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background-color: #ff007f; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        button:active { background-color: #cc0066; transform: scale(0.98); }
+
+        /* Lista de Resultados */
+        #resultados { margin-top: 20px; text-align: left; }
+        
+        .resultado-item { 
+            background: white; 
+            padding: 10px; 
+            margin-bottom: 12px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        }
+        
+        .resultado-item img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 12px; }
+        
+        .info { flex-grow: 1; }
+        .info h4 { margin: 0; font-size: 14px; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .info small { color: #888; font-size: 12px; }
+
+        .btn-add { 
+            width: auto; 
+            padding: 8px 16px; 
+            font-size: 20px; 
+            line-height: 20px;
+            background: #eee; 
+            color: #333;
+        }
+        .btn-add:hover { background: #ff007f; color: white; }
+
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <h1>JukeBox 🍔🎵</h1>
+    <p class="subtitle">O som do ambiente quem escolhe é você</p>
+
+    <div class="login-box">
+        <h3 style="margin-top: 0; color: #555;">Sua Identificação</h3>
+        <div class="input-group">
+            <input type="text" id="mesa" placeholder="Nº Mesa (Ex: 10)" style="flex: 1;">
+            <input type="password" id="senha" placeholder="Senha" style="flex: 2;">
+        </div>
+        <small style="color: #999; display: block; margin-top: 5px;">Peça a senha ao garçom</small>
+    </div>
+
+    <div>
+        <input type="text" id="termoBusca" placeholder="Qual música você quer ouvir?">
+        <button onclick="buscar()" style="margin-top: 10px;">🔍 Pesquisar</button>
+    </div>
+
+    <div id="resultados"></div>
+
+    <script>
+        const socket = io();
+
+        // 1. Função de Buscar (Não precisa de senha ainda)
+        function buscar() {
+            const termo = document.getElementById('termoBusca').value;
+            const btn = document.querySelector('button');
+            
+            if(!termo) return alert("Digite o nome de uma música ou artista!");
+
+            btn.innerText = "Buscando...";
+            btn.disabled = true; // Evita clique duplo
+
+            socket.emit('buscar_musica', termo);
+        }
+
+        // 2. Recebe a lista do YouTube
+        socket.on('resultado_busca', (listaVideos) => {
+            const divResultados = document.getElementById('resultados');
+            const btn = document.querySelector('button');
+            
+            btn.innerText = "🔍 Pesquisar"; 
+            btn.disabled = false;
+            divResultados.innerHTML = ""; // Limpa busca anterior
+
+            if(listaVideos.length === 0) {
+                divResultados.innerHTML = "<p style='color: #666;'>Nenhum resultado encontrado.</p>";
+                return;
+            }
+
+            listaVideos.forEach(video => {
+                const div = document.createElement('div');
+                div.className = 'resultado-item';
+                div.innerHTML = `
+                    <img src="${video.capa}" alt="Capa">
+                    <div class="info">
+                        <h4>${video.titulo}</h4>
+                        <small>${video.autor} • ${video.duracao}</small>
+                    </div>
+                    <button class="btn-add" onclick='adicionar("${video.id}", "${escape(video.titulo)}")'>+</button>
+                `;
+                divResultados.appendChild(div);
+            });
+        });
+
+        // 3. Ao clicar no "+" (Aqui enviamos a senha!)
+        function adicionar(id, tituloEscapado) {
+            const mesa = document.getElementById('mesa').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+
+            // Validação simples antes de incomodar o servidor
+            if(!mesa || !senha) {
+                return alert("⚠️ Atenção:\nPara adicionar músicas, você precisa preencher o Nº da Mesa e a Senha fornecida pelo estabelecimento.");
+            }
+
+            const titulo = unescape(tituloEscapado);
+
+            // Envia para o servidor conferir
+            socket.emit('add_song', {
+                id: id,
+                titulo: titulo,
+                mesa: mesa,
+                senha: senha 
+            });
+        }
+
+        // 4. Resposta do Servidor (Sucesso ou Erro de Senha)
+        socket.on('feedback_usuario', (dados) => {
+            if(dados.sucesso) {
+                alert(`✅ Tudo certo!\n${dados.mensagem}`);
+                // Limpa a busca para parecer que "finalizou" o pedido
+                document.getElementById('resultados').innerHTML = "";
+                document.getElementById('termoBusca').value = "";
+            } else {
+                // Aqui cai se a senha estiver errada, mesa não existir ou +18
+                alert(`❌ Ops!\n${dados.mensagem}`);
+            }
+        });
+
+    </script>
+</body>
+</html>

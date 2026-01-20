@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>JukeBox ADMIN</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        h1 { color: #ff007f; }
+        
+        /* Containers */
+        .panel { background: #333; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #444; }
+        .hidden { display: none; }
+        
+        /* Inputs e Botões */
+        input { padding: 8px; border-radius: 4px; border: none; margin-right: 10px; }
+        button { padding: 8px 15px; cursor: pointer; background: #ff007f; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #d6006b; }
+        button.delete { background: #ff4444; }
+
+        /* Lista de Mesas */
+        #lista-mesas div { display: flex; justify-content: space-between; background: #222; padding: 10px; margin-top: 5px; border-radius: 4px; align-items: center; }
+        
+        /* Slider de Volume */
+        input[type=range] { width: 100%; cursor: pointer; }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <h1>🔐 JukeBox Admin</h1>
+
+    <div id="login-screen" class="panel">
+        <h3>Acesso Restrito</h3>
+        <input type="text" id="admUser" placeholder="Usuário">
+        <input type="password" id="admPass" placeholder="Senha">
+        <button onclick="logar()">Entrar</button>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        
+        <div class="panel">
+            <h3>🔊 Volume Geral da TV</h3>
+            <input type="range" id="volRange" min="0" max="100" value="100" oninput="mudarVolume(this.value)">
+            <span id="volDisplay">100%</span>
+        </div>
+        <div class="panel" style="display: flex; gap: 10px;">
+            <button onclick="comandoPausar()" style="background: #444; flex: 1;">⏯ Pausar / Play</button>
+            <button onclick="comandoPular()" style="background: #444; flex: 1;">⏭ Pular Música</button>
+        </div>
+
+        <div class="panel">
+            <h3>📢 Texto do Letreiro</h3>
+            <input type="text" id="avisoInput" style="width: 70%;" placeholder="Digite o aviso...">
+            <button onclick="mudarAviso()">Atualizar TV</button>
+        </div>
+
+        <div class="panel">
+            <h3>🍔 Gerenciar Mesas</h3>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="novaMesa" placeholder="Nº Mesa (Ex: 10)" style="width: 80px;">
+                <input type="text" id="novaSenha" placeholder="Senha" style="width: 100px;">
+                <button onclick="criarMesa()">Criar / Alterar</button>
+            </div>
+            
+            <div id="lista-mesas">
+                </div>
+        </div>
+
+    </div>
+
+    <script>
+        const socket = io();
+
+        // --- LOGIN ---
+        function logar() {
+            const user = document.getElementById('admUser').value;
+            const pass = document.getElementById('admPass').value;
+            socket.emit('admin_login', { user, pass });
+        }
+
+        socket.on('admin_auth_fail', () => alert("Login incorreto!"));
+        
+        socket.on('admin_auth_ok', (dados) => {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            atualizarListaMesas(dados.mesas);
+        });
+
+        // --- VOLUME ---
+       // --- VOLUME ---
+        function mudarVolume(val) {
+            // Converte para número inteiro para garantir
+            const volumeNumerico = parseInt(val);
+            
+            document.getElementById('volDisplay').innerText = volumeNumerico + "%";
+            socket.emit('admin_volume', volumeNumerico);
+        }
+
+        // --- AVISO ---
+        function mudarAviso() {
+            const texto = document.getElementById('avisoInput').value;
+            if(texto) socket.emit('admin_aviso', texto);
+        }
+
+        // --- MESAS ---
+        function criarMesa() {
+            const mesa = document.getElementById('novaMesa').value;
+            const senha = document.getElementById('novaSenha').value;
+            if(mesa && senha) {
+                socket.emit('admin_criar_mesa', { mesa, senha });
+                // Limpa inputs
+                document.getElementById('novaMesa').value = "";
+                document.getElementById('novaSenha').value = "";
+            }
+        }
+
+        function removerMesa(mesa) {
+            if(confirm(`Excluir a Mesa ${mesa}?`)) {
+                socket.emit('admin_remover_mesa', mesa);
+            }
+        }
+
+        socket.on('admin_update_mesas', (lista) => {
+            atualizarListaMesas(lista);
+        });
+
+        function atualizarListaMesas(lista) {
+            const div = document.getElementById('lista-mesas');
+            div.innerHTML = "";
+            // Transforma o objeto em array para listar
+            for (const [mesa, senha] of Object.entries(lista)) {
+                div.innerHTML += `
+                    <div>
+                        <span><strong>Mesa ${mesa}</strong> (Senha: ${senha})</span>
+                        <button class="delete" onclick="removerMesa('${mesa}')">🗑️</button>
+                    </div>
+                `;
+            }
+        }
+
+        // --- CONTROLES DE PLAYER ---
+        function comandoPausar() {
+            socket.emit('admin_pausar');
+        }
+
+        function comandoPular() {
+            if(confirm("Tem certeza que quer pular a música atual?")) {
+                socket.emit('admin_pular');
+            }
+        }
+    </script>
+</body>
+</html>

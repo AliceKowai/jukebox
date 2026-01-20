@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Jukebox TV</title>
+    <style>
+        /* === ESTILO GERAL === */
+        body { 
+            background-color: #000; 
+            color: #fff; 
+            font-family: 'Courier New', monospace; /* Fonte mais "digital" */
+            margin: 0; 
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column; /* Organiza: Conteúdo em cima, Avisos em baixo */
+        }
+        
+        /* === ÁREA SUPERIOR (PLAYER + LISTA) === */
+        #main-content {
+            display: flex;
+            height: 90vh; /* Ocupa 90% da altura da tela */
+            width: 100%;
+        }
+
+        #player-container { 
+            width: 75%; 
+            background: #111; 
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #queue-container { 
+            width: 25%; 
+            background: #0a0a0a; 
+            border-left: 2px solid #333; 
+            padding: 20px; 
+            box-sizing: border-box; /* Garante que o padding não quebre o layout */
+            overflow-y: auto; 
+        }
+
+        /* Estilo dos Itens da Lista */
+        .queue-item { 
+            background: #1a1a1a; 
+            margin-bottom: 10px; 
+            padding: 15px; 
+            border-radius: 4px; 
+            border: 1px solid #333; 
+        }
+        .queue-item h3 { margin: 0 0 5px 0; font-size: 1.1vw; color: #ff007f; } /* Tamanho responsivo */
+        .queue-item p { margin: 0; color: #888; font-size: 0.8vw; }
+        
+        .playing-now { 
+            border: 2px solid #00ff00; 
+            background: #0f220f; 
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); 
+        }
+
+        /* === BARRA DE AVISOS (RODAPÉ) === */
+        #ticker-container {
+            height: 10vh; /* Ocupa 10% da altura */
+            background-color: #ff007f; /* Rosa SoundBite */
+            display: flex;
+            align-items: center;
+            overflow: hidden; /* Esconde o texto que sai da tela */
+            white-space: nowrap; /* Não deixa o texto quebrar linha */
+            border-top: 4px solid #fff;
+            box-shadow: 0 -5px 20px rgba(255, 0, 127, 0.4);
+        }
+
+        #ticker-text {
+            display: inline-block;
+            font-size: 4vh; /* Tamanho do texto baseado na altura da tela */
+            font-weight: bold;
+            color: #fff;
+            padding-left: 100%; /* Começa fora da tela */
+            animation: letreiro 20s linear infinite; /* Animação de 20 segundos */
+        }
+
+        @keyframes letreiro {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+        /* === TELA DE INÍCIO === */
+        #overlay-start {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999; cursor: pointer;
+        }
+    </style>
+    
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <div id="overlay-start">
+        <h1 style="color: #ff007f; font-size: 50px;">JukeBox 🍔🎵</h1>
+        <p style="color: white; font-size: 24px;">Toque na tela para iniciar</p>
+    </div>
+
+    <div id="main-content">
+        <div id="player-container">
+            <div id="player"></div>
+        </div>
+        <div id="queue-container">
+            <h2 style="color: #fff; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 0;">Fila de Reprodução</h2>
+            <div id="lista-musicas"></div>
+        </div>
+    </div>
+
+    <div id="ticker-container">
+        <div id="ticker-text">
+            🍔 Bem-vindo ao Jukebox! Peça sua música pelo QR Code da mesa • 🕒 Happy Hour até as 20h! • 🚫 Proibido som alto após as 22h
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let player;
+        let playlistAtual = [];
+        let tocandoAgoraId = null;
+        let audioLiberado = false;
+
+        // 1. YouTube API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 2. Destrava som
+        document.getElementById('overlay-start').addEventListener('click', () => {
+            audioLiberado = true;
+            document.getElementById('overlay-start').style.display = 'none';
+            if(playlistAtual.length > 0 && player && player.playVideo) player.playVideo();
+        });
+
+        // 3. Configuração do Player
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                playerVars: { 
+                    'autoplay': 1, 
+                    'controls': 0, 
+                    'origin': window.location.origin
+                }, 
+                events: {
+                    'onStateChange': onPlayerStateChange,
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            if(playlistAtual.length > 0 && audioLiberado) event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) socket.emit('proxima_musica');
+        }
+
+        // 4. Sockets
+        socket.on('update_tv', (novaPlaylist) => {
+            playlistAtual = novaPlaylist;
+            atualizarInterface();
+            
+            if (playlistAtual.length > 0) {
+                const proximaMusica = playlistAtual[0];
+                if (tocandoAgoraId !== proximaMusica.id) {
+                    tocandoAgoraId = proximaMusica.id;
+                    if(player && player.loadVideoById) player.loadVideoById(proximaMusica.id);
+                }
+            }
+        });
+
+        // Escuta para trocar o aviso remotamente no futuro
+        socket.on('update_aviso', (mensagem) => {
+            document.getElementById('ticker-text').innerText = mensagem;
+        });
+
+        socket.on('update_volume', (vol) => {
+            console.log("TV recebeu volume:", vol);
+            
+            // Verifica se o player do YouTube já carregou totalmente
+            if (player && typeof player.setVolume === 'function') {
+                player.setVolume(Number(vol)); // Força ser número
+                console.log("Volume aplicado com sucesso!");
+            } else {
+                console.log("ERRO: Player do YouTube ainda não está pronto.");
+            }
+        });
+
+        // --- NOVO: Recebe o comando de PAUSE/PLAY do Admin ---
+        socket.on('comando_controle', (acao) => {
+            console.log("Comando recebido:", acao);
+
+            // Verifica se o comando é de pausar e se o player existe
+            if (acao === 'toggle_pause' && player && typeof player.getPlayerState === 'function') {
+                
+                // Pega o estado atual: 1 = Tocando, 2 = Pausado
+                const estado = player.getPlayerState();
+                
+                if (estado === 1) {
+                    player.pauseVideo(); // Se está tocando, pausa
+                } else {
+                    player.playVideo();  // Se está pausado, toca
+                }
+            }
+        });
+
+        function atualizarInterface() {
+            const container = document.getElementById('lista-musicas');
+            container.innerHTML = ''; 
+
+            playlistAtual.forEach((musica, index) => {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                if (index === 0) item.classList.add('playing-now');
+
+                item.innerHTML = `
+                    <h3>${index + 1}. ${musica.titulo}</h3>
+                    <p>Mesa: ${musica.mesa}</p>
+                `;
+                container.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
