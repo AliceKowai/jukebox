@@ -67,3 +67,32 @@ cd jukebox
 
 # Instale os pacotes
 npm install
+
+## 🔗 Acessando as Interfaces
+
+Abra seu navegador (ou conecte o celular no mesmo Wi-Fi) e acesse:
+
+* 📺 **TV:** `http://localhost:3001/tv.html`
+* 📱 **Celular:** `http://localhost:3001/celular.html`
+* 🔐 **Painel Admin:** `http://localhost:3001/admin.html`
+
+> **Login Padrão do Admin:**
+> * User: `admin`
+> * Senha: `admin123`
+
+---
+
+## 👩‍💻 Autora
+
+<img src="https://github.com/identicons/alice.png" width="50px" style="border-radius:50%">
+
+**Alice Costa**
+*Estudante de Tecnologia & Desenvolvedora Fullstack em formação.*
+
+Gostou do projeto? Me dê uma estrelinha! ⭐  
+Feito com 💜 e código.
+
+---
+
+### 📝 Licença
+Este projeto é de uso educacional. Sinta-se livre para estudar e modificar!

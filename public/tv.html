@@ -6,77 +6,169 @@
     <style>
         /* === ESTILO GERAL === */
         body { 
-            background-color: #000; 
+            background-color: #050505; 
             color: #fff; 
-            font-family: 'Courier New', monospace; /* Fonte mais "digital" */
+            font-family: 'Courier New', monospace;
             margin: 0; 
             overflow: hidden; 
             height: 100vh;
             display: flex;
-            flex-direction: column; /* Organiza: Conteúdo em cima, Avisos em baixo */
+            flex-direction: column;
         }
         
-        /* === ÁREA SUPERIOR (PLAYER + LISTA) === */
+        /* === ÁREA SUPERIOR === */
         #main-content {
             display: flex;
-            height: 90vh; /* Ocupa 90% da altura da tela */
+            height: 90vh; 
             width: 100%;
         }
 
         #player-container { 
             width: 75%; 
-            background: #111; 
+            background: #000; 
+            display: flex;
+            flex-direction: column; /* Para colocar a barra embaixo do vídeo */
             position: relative;
+            border-right: 2px solid #222;
+        }
+
+        /* O vídeo ocupa o espaço que sobrar da barra */
+        #video-wrapper {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+        #player { width: 100%; height: 100%; position: absolute; }
+
+        /* === BARRA DE PROGRESSO === */
+        #progress-container {
+            height: 30px;
+            background: #111;
             display: flex;
             align-items: center;
-            justify-content: center;
+            padding: 0 15px;
+            border-top: 1px solid #333;
         }
 
+        #progress-bg {
+            flex: 1;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 15px;
+            position: relative;
+        }
+
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #ff007f; /* Rosa Neon */
+            box-shadow: 0 0 10px #ff007f;
+            transition: width 0.5s linear;
+        }
+
+        #time-display {
+            font-size: 14px;
+            color: #eee;
+            font-weight: bold;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        /* === BARRA LATERAL (FILA) === */
         #queue-container { 
             width: 25%; 
-            background: #0a0a0a; 
-            border-left: 2px solid #333; 
-            padding: 20px; 
-            box-sizing: border-box; /* Garante que o padding não quebre o layout */
+            background: #111; 
+            padding: 10px; 
+            box-sizing: border-box; 
             overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
         }
 
-        /* Estilo dos Itens da Lista */
+        .mascote-pixel {
+            image-rendering: pixelated; 
+            filter: drop-shadow(0 0 10px rgba(255, 0, 127, 0.3)); 
+            width: 120px;
+            margin-bottom: 5px;
+        }
+
+        .qr-card {
+            background: #1a1a1a;
+            border: 2px solid #ff007f; 
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.2);
+            width: 80%;
+        }
+
+        .qr-card img {
+            width: 100%;
+            max-width: 120px;
+            border-radius: 4px;
+            background: white; 
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .qr-card p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        h2.queue-title {
+            color: #fff; 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 5px; 
+            margin-top: 0; 
+            width: 100%;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        #lista-musicas { width: 100%; }
+
         .queue-item { 
             background: #1a1a1a; 
-            margin-bottom: 10px; 
-            padding: 15px; 
-            border-radius: 4px; 
+            margin-bottom: 8px; 
+            padding: 10px; 
+            border-radius: 6px; 
             border: 1px solid #333; 
         }
-        .queue-item h3 { margin: 0 0 5px 0; font-size: 1.1vw; color: #ff007f; } /* Tamanho responsivo */
-        .queue-item p { margin: 0; color: #888; font-size: 0.8vw; }
+        
+        .queue-item h3 { margin: 0 0 3px 0; font-size: 14px; color: #ff007f; text-shadow: 0 0 5px rgba(255,0,127,0.5); }
+        .queue-item p { margin: 0; color: #888; font-size: 11px; }
         
         .playing-now { 
             border: 2px solid #00ff00; 
             background: #0f220f; 
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); 
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); 
         }
 
-        /* === BARRA DE AVISOS (RODAPÉ) === */
+        /* === RODAPÉ === */
         #ticker-container {
-            height: 10vh; /* Ocupa 10% da altura */
-            background-color: #ff007f; /* Rosa SoundBite */
+            height: 10vh; 
+            background-color: #ff007f; 
             display: flex;
             align-items: center;
-            overflow: hidden; /* Esconde o texto que sai da tela */
-            white-space: nowrap; /* Não deixa o texto quebrar linha */
+            overflow: hidden; 
+            white-space: nowrap; 
             border-top: 4px solid #fff;
-            box-shadow: 0 -5px 20px rgba(255, 0, 127, 0.4);
         }
 
         #ticker-text {
             display: inline-block;
-            font-size: 4vh; /* Tamanho do texto baseado na altura da tela */
-            font-weight: bold;
+            font-size: 4vh; 
+            font-weight: bold; 
             color: #fff;
-            padding-left: 100%; /* Começa fora da tela */
-            animation: letreiro 20s linear infinite; /* Animação de 20 segundos */
+            padding-left: 100%; 
+            animation: letreiro 20s linear infinite; 
         }
 
         @keyframes letreiro {
@@ -84,13 +176,20 @@
             100% { transform: translate(-100%, 0); }
         }
 
-        /* === TELA DE INÍCIO === */
+        /* === OVERLAY === */
         #overlay-start {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.95);
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 9999; cursor: pointer;
+            transition: opacity 0.5s;
+        }
+
+        @keyframes flutuar {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
     </style>
     
@@ -99,23 +198,42 @@
 <body>
 
     <div id="overlay-start">
-        <h1 style="color: #ff007f; font-size: 50px;">JukeBox 🍔🎵</h1>
-        <p style="color: white; font-size: 24px;">Toque na tela para iniciar</p>
+        <img src="gato-sleep.png" class="mascote-pixel" style="width: 250px; margin-bottom: 20px; animation: flutuar 3s infinite ease-in-out;">
+        <h1 style="color: #ff007f; font-size: 40px; margin: 0;">Jukebox 🍔🎵</h1>
+        <p style="color: #ccc; font-size: 18px; margin-top: 10px;">Toque na tela para acordar o sistema</p>
     </div>
 
     <div id="main-content">
         <div id="player-container">
-            <div id="player"></div>
+            <div id="video-wrapper">
+                <div id="player"></div>
+            </div>
+            
+            <div id="progress-container">
+                <div id="progress-bg">
+                    <div id="progress-fill"></div>
+                </div>
+                <span id="time-display">0:00 / 0:00</span>
+            </div>
         </div>
+
         <div id="queue-container">
-            <h2 style="color: #fff; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 0;">Fila de Reprodução</h2>
+            <img src="gato-active.png" class="mascote-pixel">
+            
+            <div class="qr-card">
+                <img src="qrcode.png" alt="QR Code">
+                <p>Escaneie para pedir</p>
+                <p style="font-size: 10px; color: #888;">soundbite.app</p>
+            </div>
+            
+            <h2 class="queue-title">Próximas Músicas</h2>
             <div id="lista-musicas"></div>
         </div>
     </div>
 
     <div id="ticker-container">
         <div id="ticker-text">
-            🍔 Bem-vindo ao Jukebox! Peça sua música pelo QR Code da mesa • 🕒 Happy Hour até as 20h! • 🚫 Proibido som alto após as 22h
+            🍔 Bem-vindo ao Jukebox! Use o QR Code para ser o DJ! • 🕒 Cozinha aberta até as 23h • 🐱 Siga nosso mascote!
         </div>
     </div>
 
@@ -125,6 +243,7 @@
         let playlistAtual = [];
         let tocandoAgoraId = null;
         let audioLiberado = false;
+        let progressInterval;
 
         // 1. YouTube API
         var tag = document.createElement('script');
@@ -132,11 +251,15 @@
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // 2. Destrava som
+        // 2. Destrava som (Efeito de sumir o overlay)
         document.getElementById('overlay-start').addEventListener('click', () => {
             audioLiberado = true;
-            document.getElementById('overlay-start').style.display = 'none';
-            if(playlistAtual.length > 0 && player && player.playVideo) player.playVideo();
+            const overlay = document.getElementById('overlay-start');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 500);
+            
+            // Tenta tocar apenas AGORA que o usuário clicou
+            tocarProximaSeHouver();
         });
 
         // 3. Configuração do Player
@@ -147,7 +270,9 @@
                 playerVars: { 
                     'autoplay': 1, 
                     'controls': 0, 
-                    'origin': window.location.origin
+                    'origin': window.location.origin,
+                    'disablekb': 1,
+                    'fs': 0 
                 }, 
                 events: {
                     'onStateChange': onPlayerStateChange,
@@ -157,75 +282,153 @@
         }
 
         function onPlayerReady(event) {
-            if(playlistAtual.length > 0 && audioLiberado) event.target.playVideo();
+            // Se o usuário JÁ clicou antes do player carregar, toca agora
+            if(audioLiberado) tocarProximaSeHouver();
+            
+            // Inicia o loop da barra de progresso
+            iniciarBarraProgresso();
         }
 
         function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) socket.emit('proxima_musica');
+            if (event.data === YT.PlayerState.ENDED) {
+                socket.emit('proxima_musica');
+            }
         }
 
-        // 4. Sockets
-        socket.on('update_tv', (novaPlaylist) => {
-            playlistAtual = novaPlaylist;
+        // 4. Lógica de Tocar (Centralizada)
+        function tocarProximaSeHouver() {
+            if (!audioLiberado || !player || !player.loadVideoById) return;
+            if (playlistAtual.length === 0) return;
+
+            const proximaMusica = playlistAtual[0];
+
+            // Só carrega se a música mudou (evita recarregar a mesma e dar erro)
+            if (tocandoAgoraId !== proximaMusica.id) {
+                tocandoAgoraId = proximaMusica.id;
+                console.log("Carregando:", proximaMusica.titulo);
+                
+                // Carrega do início (0s) para evitar erros de buffer
+                player.loadVideoById({
+                    videoId: proximaMusica.id,
+                    startSeconds: 0 
+                });
+            } else {
+                // Se for a mesma música mas estava pausada/não iniciada, dá play
+                if(player.getPlayerState() !== 1) player.playVideo();
+            }
+        }
+
+        // 5. Barra de Progresso
+        function formatarTempo(segundos) {
+            const min = Math.floor(segundos / 60);
+            const seg = Math.floor(segundos % 60);
+            return `${min}:${seg < 10 ? '0' : ''}${seg}`;
+        }
+
+        function iniciarBarraProgresso() {
+            if(progressInterval) clearInterval(progressInterval);
+            
+            progressInterval = setInterval(() => {
+                if(player && player.getCurrentTime) {
+                    const atual = player.getCurrentTime();
+                    const total = player.getDuration();
+                    
+                    if(total > 0) {
+                        const porcentagem = (atual / total) * 100;
+                        document.getElementById('progress-fill').style.width = `${porcentagem}%`;
+                        document.getElementById('time-display').innerText = 
+                            `${formatarTempo(atual)} / ${formatarTempo(total)}`;
+                    }
+                }
+            }, 1000); // Atualiza a cada 1 segundo
+        }
+
+        // 6. Sockets
+        socket.on('update_tv', (dados) => {
+            // Aceita tanto o formato novo (objeto) quanto o antigo (array)
+            const listaReal = dados.lista ? dados.lista : dados;
+            playlistAtual = Array.isArray(listaReal) ? listaReal : [];
+            
             atualizarInterface();
             
-            if (playlistAtual.length > 0) {
-                const proximaMusica = playlistAtual[0];
-                if (tocandoAgoraId !== proximaMusica.id) {
-                    tocandoAgoraId = proximaMusica.id;
-                    if(player && player.loadVideoById) player.loadVideoById(proximaMusica.id);
-                }
-            }
-        });
-
-        // Escuta para trocar o aviso remotamente no futuro
-        socket.on('update_aviso', (mensagem) => {
-            document.getElementById('ticker-text').innerText = mensagem;
-        });
-
-        socket.on('update_volume', (vol) => {
-            console.log("TV recebeu volume:", vol);
-            
-            // Verifica se o player do YouTube já carregou totalmente
-            if (player && typeof player.setVolume === 'function') {
-                player.setVolume(Number(vol)); // Força ser número
-                console.log("Volume aplicado com sucesso!");
+            // Se a lista ficou vazia, reseta
+            if (playlistAtual.length === 0) {
+                tocandoAgoraId = null;
+                if(player && player.stopVideo) player.stopVideo();
             } else {
-                console.log("ERRO: Player do YouTube ainda não está pronto.");
+                // Se tem música, tenta tocar (mas respeita o audioLiberado)
+                tocarProximaSeHouver();
             }
         });
 
-        // --- NOVO: Recebe o comando de PAUSE/PLAY do Admin ---
+        socket.on('update_aviso', (msg) => document.getElementById('ticker-text').innerText = msg);
+        socket.on('update_volume', (vol) => { if(player && player.setVolume) player.setVolume(Number(vol)); });
+        
         socket.on('comando_controle', (acao) => {
-            console.log("Comando recebido:", acao);
-
-            // Verifica se o comando é de pausar e se o player existe
-            if (acao === 'toggle_pause' && player && typeof player.getPlayerState === 'function') {
-                
-                // Pega o estado atual: 1 = Tocando, 2 = Pausado
+            if (acao === 'toggle_pause' && player) {
                 const estado = player.getPlayerState();
-                
-                if (estado === 1) {
-                    player.pauseVideo(); // Se está tocando, pausa
-                } else {
-                    player.playVideo();  // Se está pausado, toca
-                }
+                estado === 1 ? player.pauseVideo() : player.playVideo();
             }
         });
+
+        // --- LÓGICA DA CHUVA DE EMOJIS ---
+    socket.on('receber_reacao', (emoji) => {
+        criarEmojiFlutuante(emoji);
+    });
+
+    function criarEmojiFlutuante(emoji) {
+        const elemento = document.createElement('div');
+        elemento.innerText = emoji;
+        elemento.style.position = 'fixed';
+        elemento.style.bottom = '-50px'; // Começa fora da tela
+        
+        // Posição horizontal aleatória (0% a 100% da tela)
+        elemento.style.left = Math.random() * 100 + 'vw'; 
+        
+        // Tamanho aleatório para dar profundidade
+        const tamanho = Math.random() * 30 + 20; // Entre 20px e 50px
+        elemento.style.fontSize = tamanho + 'px';
+        
+        elemento.style.zIndex = '9999';
+        elemento.style.pointerEvents = 'none'; // Importante: para não bloquear cliques
+        
+        // Animação manual via CSS transition/keyframes
+        elemento.style.transition = `bottom 3s linear, opacity 3s ease-in, transform 3s ease-in-out`;
+        elemento.style.opacity = '1';
+        
+        document.body.appendChild(elemento);
+
+        // Força o navegador a desenhar o frame inicial antes de animar
+        setTimeout(() => {
+            elemento.style.bottom = '110vh'; // Vai até o topo
+            elemento.style.opacity = '0';    // Desaparece
+            
+            // Um leve balanço para os lados
+            const balanco = Math.random() > 0.5 ? '50px' : '-50px';
+            elemento.style.transform = `translateX(${balanco}) rotate(360deg)`;
+        }, 50);
+
+        // Limpeza: Remove do HTML depois que a animação acaba (evita travar o PC)
+        setTimeout(() => {
+            elemento.remove();
+        }, 3500);
+    }
 
         function atualizarInterface() {
             const container = document.getElementById('lista-musicas');
+            if(!container) return;
             container.innerHTML = ''; 
+
+            if (playlistAtual.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666; padding:20px;">Fila vazia... seja o DJ!</p>';
+                return;
+            }
 
             playlistAtual.forEach((musica, index) => {
                 const item = document.createElement('div');
                 item.className = 'queue-item';
                 if (index === 0) item.classList.add('playing-now');
-
-                item.innerHTML = `
-                    <h3>${index + 1}. ${musica.titulo}</h3>
-                    <p>Mesa: ${musica.mesa}</p>
-                `;
+                item.innerHTML = `<h3>${index + 1}. ${musica.titulo}</h3><p>Mesa: ${musica.mesa}</p>`;
                 container.appendChild(item);
             });
         }
