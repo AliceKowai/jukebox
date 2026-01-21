@@ -41,7 +41,7 @@ O **Jukebox** é um sistema interativo para restaurantes e eventos onde **o clie
 
 ## 🛠️ Tecnologias Utilizadas
 
-Este projeto foi feito com muito carinho (e café ☕) usando:
+Este projeto foi feito com muito carinho usando:
 
 * **Node.js & Express:** O cérebro do servidor.
 * **Socket.io:** Para a mágica do tempo real (WebSockets).
@@ -61,13 +61,12 @@ Certifique-se de ter o [Node.js](https://nodejs.org/) instalado.
 ### 2. Instalação
 Clone este repositório e instale as dependências:
 
-```bash
 # Entre na pasta
 cd jukebox
-
+```
 # Instale os pacotes
 npm install
-
+```
 ## 🔗 Acessando as Interfaces
 
 Abra seu navegador (ou conecte o celular no mesmo Wi-Fi) e acesse:
@@ -84,7 +83,7 @@ Abra seu navegador (ou conecte o celular no mesmo Wi-Fi) e acesse:
 
 ## 👩‍💻 Autora
 
-<img src="https://github.com/identicons/alice.png" width="50px" style="border-radius:50%">
+<img src="https://i.pinimg.com/736x/82/38/9b/82389b35eb60bd77bcceac82987c3aca.jpg" width="300px" style="border-radius:50%">
 
 **Alice Costa**
 *Estudante de Tecnologia & Desenvolvedora Fullstack em formação.*
