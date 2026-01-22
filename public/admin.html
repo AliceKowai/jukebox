@@ -2,66 +2,207 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>JukeBox ADMIN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JukeBox Admin</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        h1 { color: #ff007f; }
+        /* --- RESET BÁSICO --- */
+        * { box-sizing: border-box; outline: none; }
         
-        /* Containers */
-        .panel { background: #333; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #444; }
-        .hidden { display: none; }
-        
-        /* Inputs e Botões */
-        input { padding: 8px; border-radius: 4px; border: none; margin-right: 10px; }
-        button { padding: 8px 15px; cursor: pointer; background: #ff007f; color: white; border: none; border-radius: 4px; font-weight: bold; }
-        button:hover { background: #d6006b; }
-        button.delete { background: #ff4444; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #121212; /* Fundo bem escuro */
+            color: #e0e0e0; 
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 50px;
+        }
 
-        /* Lista de Mesas */
-        #lista-mesas div { display: flex; justify-content: space-between; background: #222; padding: 10px; margin-top: 5px; border-radius: 4px; align-items: center; }
+        h1 { 
+            color: #ff007f; 
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h3 {
+            margin-top: 0;
+            color: #ff80bf; /* Rosa claro */
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
         
-        /* Slider de Volume */
-        input[type=range] { width: 100%; cursor: pointer; }
+        /* --- CONTAINERS (CARDS) --- */
+        .panel { 
+            background: #1e1e1e; 
+            padding: 20px; 
+            border-radius: 16px; /* Cantos arredondados estilo iOS */
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .hidden { display: none !important; }
+        
+        /* --- INPUTS E BOTÕES --- */
+        input[type="text"], input[type="password"] { 
+            width: 100%;
+            padding: 15px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px; /* Evita zoom automático no iPhone */
+            margin-bottom: 10px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #ff007f;
+        }
+
+        button { 
+            width: 100%;
+            padding: 15px; 
+            cursor: pointer; 
+            background: #ff007f; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            font-size: 16px;
+            margin-bottom: 5px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:active { transform: scale(0.98); opacity: 0.8; }
+        
+        /* Botões Secundários (Cinza) */
+        button.secondary { background: #444; }
+        
+        /* Botão de Deletar (Pequeno) */
+        button.delete { 
+            background: #ff4444; 
+            width: auto; 
+            padding: 8px 15px; 
+            margin: 0;
+        }
+
+        /* --- GRUPO DE BOTÕES (Lado a Lado) --- */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-group button {
+            margin-bottom: 0;
+        }
+
+        /* --- LISTA DE MESAS --- */
+        #lista-mesas {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .mesa-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background: #2a2a2a; 
+            padding: 15px; 
+            margin-bottom: 8px; 
+            border-radius: 8px; 
+            border-left: 4px solid #ff007f;
+        }
+        
+        .mesa-info strong { font-size: 18px; display: block; }
+        .mesa-info span { font-size: 12px; color: #888; }
+
+        /* --- SLIDER DE VOLUME --- */
+        input[type=range] { 
+            width: 100%; 
+            height: 6px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            margin: 15px 0;
+        }
+        
+        /* Bolinha do Slider */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            background: #ff007f;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
+        }
+
+        #volDisplay {
+            display: block;
+            text-align: right;
+            font-weight: bold;
+            color: #ff007f;
+            font-size: 1.2em;
+        }
+
+        /* Animação simples de entrada */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .panel { animation: fadeIn 0.4s ease-out; }
+
     </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
 
-    <h1>🔐 JukeBox Admin</h1>
+    <h1>🔐 Admin Panel</h1>
 
     <div id="login-screen" class="panel">
-        <h3>Acesso Restrito</h3>
+        <h3>Identifique-se</h3>
         <input type="text" id="admUser" placeholder="Usuário">
         <input type="password" id="admPass" placeholder="Senha">
-        <button onclick="logar()">Entrar</button>
+        <button onclick="logar()">Acessar Sistema</button>
     </div>
 
     <div id="dashboard" class="hidden">
         
         <div class="panel">
-            <h3>🔊 Volume Geral da TV</h3>
-            <input type="range" id="volRange" min="0" max="100" value="100" oninput="mudarVolume(this.value)">
+            <h3>🔊 Volume Geral</h3>
             <span id="volDisplay">100%</span>
-        </div>
-        <div class="panel" style="display: flex; gap: 10px;">
-            <button onclick="comandoPausar()" style="background: #444; flex: 1;">⏯ Pausar / Play</button>
-            <button onclick="comandoPular()" style="background: #444; flex: 1;">⏭ Pular Música</button>
+            <input type="range" id="volRange" min="0" max="100" value="100" oninput="mudarVolume(this.value)">
         </div>
 
         <div class="panel">
-            <h3>📢 Texto do Letreiro</h3>
-            <input type="text" id="avisoInput" style="width: 70%;" placeholder="Digite o aviso...">
-            <button onclick="mudarAviso()">Atualizar TV</button>
+            <h3>🎮 Controles</h3>
+            <div class="btn-group">
+                <button onclick="comandoPausar()" class="secondary">⏯ Play/Pause</button>
+                <button onclick="comandoPular()" class="secondary">⏭ Pular</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>📢 Letreiro da TV</h3>
+            <input type="text" id="avisoInput" placeholder="Digite uma mensagem...">
+            <button onclick="mudarAviso()">Atualizar Texto</button>
         </div>
 
         <div class="panel">
             <h3>🍔 Gerenciar Mesas</h3>
-            <div style="margin-bottom: 15px;">
-                <input type="text" id="novaMesa" placeholder="Nº Mesa (Ex: 10)" style="width: 80px;">
-                <input type="text" id="novaSenha" placeholder="Senha" style="width: 100px;">
-                <button onclick="criarMesa()">Criar / Alterar</button>
+            
+            <div style="background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <label style="font-size: 12px; color: #888; margin-bottom: 5px; display: block;">NOVA MESA</label>
+                <div class="btn-group">
+                    <input type="text" id="novaMesa" placeholder="Nº" style="flex: 1;">
+                    <input type="text" id="novaSenha" placeholder="Senha" style="flex: 2;">
+                </div>
+                <button onclick="criarMesa()">+ Adicionar Mesa</button>
             </div>
             
+            <label style="font-size: 12px; color: #888; margin-bottom: 5px; display: block;">MESAS ATIVAS</label>
             <div id="lista-mesas">
                 </div>
         </div>
@@ -75,10 +216,18 @@
         function logar() {
             const user = document.getElementById('admUser').value;
             const pass = document.getElementById('admPass').value;
+            // Feedback visual simples
+            const btn = document.querySelector('#login-screen button');
+            const textoOriginal = btn.innerText;
+            btn.innerText = "Verificando...";
+            
             socket.emit('admin_login', { user, pass });
+            
+            // Se falhar, volta o texto
+            setTimeout(() => { btn.innerText = textoOriginal; }, 2000);
         }
 
-        socket.on('admin_auth_fail', () => alert("Login incorreto!"));
+        socket.on('admin_auth_fail', () => alert("❌ Senha incorreta!"));
         
         socket.on('admin_auth_ok', (dados) => {
             document.getElementById('login-screen').classList.add('hidden');
@@ -87,11 +236,8 @@
         });
 
         // --- VOLUME ---
-       // --- VOLUME ---
         function mudarVolume(val) {
-            // Converte para número inteiro para garantir
             const volumeNumerico = parseInt(val);
-            
             document.getElementById('volDisplay').innerText = volumeNumerico + "%";
             socket.emit('admin_volume', volumeNumerico);
         }
@@ -99,7 +245,14 @@
         // --- AVISO ---
         function mudarAviso() {
             const texto = document.getElementById('avisoInput').value;
-            if(texto) socket.emit('admin_aviso', texto);
+            const btn = document.querySelector('#avisoInput + button');
+            
+            if(texto) {
+                socket.emit('admin_aviso', texto);
+                const original = btn.innerText;
+                btn.innerText = "Enviado! ✅";
+                setTimeout(() => btn.innerText = original, 2000);
+            }
         }
 
         // --- MESAS ---
@@ -108,14 +261,14 @@
             const senha = document.getElementById('novaSenha').value;
             if(mesa && senha) {
                 socket.emit('admin_criar_mesa', { mesa, senha });
-                // Limpa inputs
                 document.getElementById('novaMesa').value = "";
                 document.getElementById('novaSenha').value = "";
+                document.getElementById('novaMesa').focus();
             }
         }
 
         function removerMesa(mesa) {
-            if(confirm(`Excluir a Mesa ${mesa}?`)) {
+            if(confirm(`Tem certeza que deseja apagar a Mesa ${mesa}?`)) {
                 socket.emit('admin_remover_mesa', mesa);
             }
         }
@@ -127,26 +280,31 @@
         function atualizarListaMesas(lista) {
             const div = document.getElementById('lista-mesas');
             div.innerHTML = "";
-            // Transforma o objeto em array para listar
-            for (const [mesa, senha] of Object.entries(lista)) {
+            
+            const mesasArray = Object.entries(lista);
+
+            if(mesasArray.length === 0) {
+                div.innerHTML = "<p style='text-align:center; color:#666; padding: 20px;'>Nenhuma mesa ativa.</p>";
+                return;
+            }
+
+            for (const [mesa, senha] of mesasArray) {
                 div.innerHTML += `
-                    <div>
-                        <span><strong>Mesa ${mesa}</strong> (Senha: ${senha})</span>
-                        <button class="delete" onclick="removerMesa('${mesa}')">🗑️</button>
+                    <div class="mesa-item">
+                        <div class="mesa-info">
+                            <strong>Mesa ${mesa}</strong>
+                            <span>Senha: ${senha}</span>
+                        </div>
+                        <button class="delete" onclick="removerMesa('${mesa}')">Excluir</button>
                     </div>
                 `;
             }
         }
 
-        // --- CONTROLES DE PLAYER ---
-        function comandoPausar() {
-            socket.emit('admin_pausar');
-        }
-
-        function comandoPular() {
-            if(confirm("Tem certeza que quer pular a música atual?")) {
-                socket.emit('admin_pular');
-            }
+        // --- CONTROLES ---
+        function comandoPausar() { socket.emit('admin_pausar'); }
+        function comandoPular() { 
+            if(confirm("Pular música atual?")) socket.emit('admin_pular'); 
         }
     </script>
 </body>
