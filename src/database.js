@@ -8,7 +8,7 @@ async function connectDB() {
         await criarAdminPadrao();
     } catch (err) {
         console.error("❌ Erro ao conectar no MongoDB:", err);
-        process.exit(1); // Encerra se não conectar
+        process.exit(1);
     }
 }
 
